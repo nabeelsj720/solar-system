@@ -107,4 +107,11 @@ jobs:
               -e MONGO_USERNAME=$MONGO_USERNAME \
               -e MONGO_PASSWORD=$MONGO_PASSWORD \
               nabeelsj720/nabeelsj720/solar-system:${{ github.sha }}
-              wget  -q -O - 127.0.0.1:3000/live  | grep -i live  
+              wget  -q -O - 127.0.0.1:3000/live  | grep -i live
+
+      - name: Pushing image
+        uses: docker/build-push-action@v6
+        with: 
+          context: .
+          tags:  nabeelsj720/nabeelsj720/solar-system:${{ github.sha }}
+          push: true      
