@@ -95,7 +95,7 @@ jobs:
         uses: docker/build-push-action@v6
         with: 
           context: .
-          tags:  ${{ vars.DOCKERHUB_USERNAME }}/solar-system:${{ github.sha }}
+          tags:  ${{ vars.DOCKERHUB_USERNAME }}/${{ vars.DOCKERHUB_USERNAME }}/solar-system:${{ github.sha }}
           push: false
 
       - name: Testing Docker image
