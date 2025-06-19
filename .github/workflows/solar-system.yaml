@@ -166,6 +166,7 @@ jobs:
       - name: Deploying app 
         run: |
           kubectl apply -f kubernetes/development/
+
     
       - name: retriving the url of service with nodeport
         id: myservice
