@@ -10,7 +10,7 @@ env:
   MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
 jobs:
   unit-testing:
-    name: nodejs unit testing
+    #name: nodejs unit testing
     runs-on: ubuntu-latest
     steps:
       - name: checkout repo
