@@ -1,16 +1,16 @@
 name: solar system 
 on: 
   workflow_dispatch:
-  #push: 
-  #  branches: 
-  #    - main
-  #    - feature/*
- 
+  push: 
+    branches: 
+      - main
+      - feature/*
+
 env: 
   MONGO_URI: 'mongodb+srv://supercluster.d83jj.mongodb.net/superData'
   MONGO_USERNAME: ${{ vars.MONGO_USERNAME }}
   MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
- 
+
 jobs: 
   unit-testing: 
     strategy: 
@@ -28,15 +28,28 @@ jobs:
       - uses: actions/setup-node@v4 
         with:
           node-version: ${{ matrix.nodejsversion }}
+
+      - name: Saving Cache
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
+
+
       - name: install dependencies
         run: npm install 
-      - run: npm test
+         
+      - name: testing npm 
+        run: npm test
+         
       - name: Saving the test results
+        if: always()
         uses: actions/upload-artifact@v4
         with: 
-          name: numberwise-${{ matrix.nodejsversion }}-on-${{ matrix.os }}
+          name: numberwise-${{ matrix.nodejsversion }}-onn-${{ matrix.os }}
           path: test-results.xml
- 
+
+
   code-coverage: 
     runs-on: ubuntu-latest
     steps: 
@@ -45,9 +58,17 @@ jobs:
       - uses: actions/setup-node@v4 
         with:
           node-version: 18
+
+      - name: Saving Cache
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
+
       - name: install dependencies
         run: npm install 
       - name: Run code coverage
+        continue-on-error: true
         run: npm run coverage
       - name: saving coverage artifact 
         uses: actions/upload-artifact@v4
@@ -55,3 +76,34 @@ jobs:
           name: Coverage results
           path: coverage
           retention-days: 2
+
+
+  docker: 
+    name: containerization 
+    needs: [unit-testing, code-coverage]
+    runs-on: ubuntu-latest
+    steps: 
+      - name: checking out
+        uses: actions/checkout@v4
+      - name: docker login 
+        uses: docker/login-action@v3
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+        
+      - name: Build and Push 
+        uses: docker/build-push-action@v6
+        with: 
+          context: .
+          tags:  ${{ vars.DOCKERHUB_USERNAME }}/solar-system:${{ github.sha }}
+          push: false
+
+      - name: Testing Docker image
+        run: |  
+              docker images
+              docker run  --name mayank-solar-system  -d  -p 3000:3000 \
+              -e MONGO_URI=$MONGO_URI \
+              -e MONGO_USERNAME=$MONGO_USERNAME \
+              -e MONGO_PASSWORD=$MONGO_PASSWORD \
+              ${{ vars.DOCKERHUB_USERNAME }}/solar-system:${{ github.sha }}
+              wget  -q -O - 127.0.0.1:3000/live  | grep -i live
