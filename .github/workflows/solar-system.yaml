@@ -141,7 +141,8 @@ jobs:
       - name: runnnig kubectl commands
         run: |
               kubectl version 
-              kubectl get nodes  
+              kubectl get nodes 
+              kubectl get ns 
       - name: replaceing some token 
         uses: cschleiden/replace-tokens@v1
         with: 
